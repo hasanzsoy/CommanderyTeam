@@ -5,19 +5,26 @@ public sealed class PlayerInputReader : MonoBehaviour
     [Header("References")]
     [SerializeField] private FloatingJoystick floatingJoystick;
 
-    [Header("Debug / Editor")]
+    [Header("Input Settings")]
+    [SerializeField, Range(0f, 0.5f)]
+    private float joystickDeadZone = 0.1f;
+
+    [Header("Editor Settings")]
     [SerializeField] private bool enableKeyboardInput = true;
 
     public Vector2 MoveInput { get; private set; }
 
     private void Update()
     {
-        Vector2 keyboardInput = ReadKeyboardInput();
         Vector2 joystickInput = ReadJoystickInput();
 
-        MoveInput = joystickInput.sqrMagnitude > 0.001f
-            ? joystickInput
-            : keyboardInput;
+        if (joystickInput != Vector2.zero)
+        {
+            MoveInput = joystickInput;
+            return;
+        }
+
+        MoveInput = ReadKeyboardInput();
     }
 
     private Vector2 ReadKeyboardInput()
@@ -27,8 +34,28 @@ public sealed class PlayerInputReader : MonoBehaviour
             return Vector2.zero;
         }
 
-        float horizontal = Input.GetAxisRaw("Horizontal");
-        float vertical = Input.GetAxisRaw("Vertical");
+        float horizontal = 0f;
+        float vertical = 0f;
+
+        if (Input.GetKey(KeyCode.A))
+        {
+            horizontal -= 1f;
+        }
+
+        if (Input.GetKey(KeyCode.D))
+        {
+            horizontal += 1f;
+        }
+
+        if (Input.GetKey(KeyCode.S))
+        {
+            vertical -= 1f;
+        }
+
+        if (Input.GetKey(KeyCode.W))
+        {
+            vertical += 1f;
+        }
 
         return Vector2.ClampMagnitude(
             new Vector2(horizontal, vertical),
@@ -42,6 +69,15 @@ public sealed class PlayerInputReader : MonoBehaviour
             return Vector2.zero;
         }
 
-        return floatingJoystick.Input;
+        Vector2 joystickInput = floatingJoystick.Input;
+
+        if (joystickInput.magnitude < joystickDeadZone)
+        {
+            return Vector2.zero;
+        }
+
+        return Vector2.ClampMagnitude(
+            joystickInput,
+            1f);
     }
 }

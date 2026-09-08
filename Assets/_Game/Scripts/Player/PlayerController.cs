@@ -43,6 +43,12 @@ public sealed class PlayerController : MonoBehaviour
     {
         Vector2 input = inputReader.MoveInput;
 
+        if (input.sqrMagnitude <= 0.0001f)
+        {
+            moveDirection = Vector3.zero;
+            return;
+        }
+
         moveDirection = new Vector3(input.x,0f,input.y);
 
         moveDirection = Vector3.ClampMagnitude(moveDirection,1f);
