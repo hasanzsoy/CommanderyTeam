@@ -383,10 +383,10 @@ Rigidbody:
     m_Bits: 0
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
-  m_UseGravity: 1
+  m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 1
-  m_Constraints: 80
+  m_Constraints: 84
   m_CollisionDetection: 0
 --- !u!114 &187968687
 MonoBehaviour:
@@ -414,6 +414,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInputReader
   floatingJoystick: {fileID: 92546431}
+  joystickDeadZone: 0.1
   enableKeyboardInput: 1
 --- !u!114 &187968689
 MonoBehaviour:
