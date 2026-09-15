@@ -315,6 +315,7 @@ GameObject:
   - component: {fileID: 187968687}
   - component: {fileID: 187968688}
   - component: {fileID: 187968689}
+  - component: {fileID: 187968690}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -429,6 +430,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerHealth
   playerData: {fileID: 11400000, guid: 11e13fedd9a07d94a83a226a6bc0db8c, type: 2}
+--- !u!114 &187968690
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 187968683}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d4adcfbe5d9f8f54cad66ffebc106eee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SquadTrailRecorder
+  recordDistance: 0.1
+  maxRecordedPoints: 300
 --- !u!1 &236290142
 GameObject:
   m_ObjectHideFlags: 0

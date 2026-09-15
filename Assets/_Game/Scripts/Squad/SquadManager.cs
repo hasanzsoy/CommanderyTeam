@@ -16,16 +16,34 @@ public sealed class SquadManager : MonoBehaviour
 
     private readonly List<SquadMember> members = new();
 
+    private SquadTrailRecorder trailRecorder;
+
     public event Action SquadChanged;
 
     public IReadOnlyList<SquadMember> Members => members;
 
     public int MemberCount => members.Count;
 
-    public bool IsFull =>squadSettings != null && MemberCount >= squadSettings.MaxMemberCount;
+    public bool IsFull =>
+        squadSettings != null &&
+        MemberCount >= squadSettings.MaxMemberCount;
 
     private void Start()
     {
+        if (!ValidateReferences())
+        {
+            enabled = false;
+            return;
+        }
+
+        if (!leader.TryGetComponent(out trailRecorder))
+        {
+            Debug.LogError($"{leader.name} requires a {nameof(SquadTrailRecorder)} component.",leader);
+
+            enabled = false;
+            return;
+        }
+
         SpawnStartingMember();
     }
 
@@ -33,14 +51,14 @@ public sealed class SquadManager : MonoBehaviour
     {
         if (memberData == null)
         {
-            Debug.LogWarning($"{nameof(SquadManager)} cannot add a null SquadMemberDataSO.",this);
+            Debug.LogWarning($"{nameof(SquadManager)} cannot add a null member.",this);
 
             return false;
         }
 
         if (IsFull)
         {
-            Debug.LogWarning("Squad is full. New member could not be added.",this);
+            Debug.LogWarning("Squad is full.",this);
 
             return false;
         }
@@ -52,7 +70,9 @@ public sealed class SquadManager : MonoBehaviour
             return false;
         }
 
-        SquadMember newMember = CreateMember(memberData);
+        int formationIndex = members.Count;
+
+        SquadMember newMember = CreateMember(memberData,formationIndex);
 
         if (newMember == null)
         {
@@ -61,6 +81,8 @@ public sealed class SquadManager : MonoBehaviour
 
         members.Add(newMember);
 
+        RefreshFormation();
+
         SquadChanged?.Invoke();
 
         return true;
@@ -68,15 +90,9 @@ public sealed class SquadManager : MonoBehaviour
 
     private void SpawnStartingMember()
     {
-        if (!ValidateReferences())
-        {
-            enabled = false;
-            return;
-        }
-
         if (startingMember == null)
         {
-            Debug.LogWarning($"{nameof(SquadManager)} does not have a starting squad member.",this);
+            Debug.LogWarning($"{nameof(SquadManager)} does not have a starting member.",this);
 
             return;
         }
@@ -84,15 +100,26 @@ public sealed class SquadManager : MonoBehaviour
         TryAddMember(startingMember);
     }
 
-    private SquadMember CreateMember(SquadMemberDataSO memberData)
+    private SquadMember CreateMember(SquadMemberDataSO memberData,int formationIndex)
     {
-        Vector3 spawnPosition = leader.position + leader.TransformDirection(squadSettings.InitialSpawnOffset);
+        Vector3 formationOffset = squadSettings.GetFormationOffset(formationIndex);
+
+        Vector3 spawnPosition = leader.TransformPoint(formationOffset);
 
         GameObject instance = Instantiate(memberData.Prefab,spawnPosition,leader.rotation,memberParent);
 
         if (!instance.TryGetComponent(out SquadMember squadMember))
         {
-            Debug.LogError($"{memberData.Prefab.name} requires a {nameof(SquadMember)} component.",instance);
+            Debug.LogError($"{memberData.Prefab.name} requires a " + $"{nameof(SquadMember)} component.",instance);
+
+            Destroy(instance);
+
+            return null;
+        }
+
+        if (!instance.TryGetComponent(out SquadFollower squadFollower))
+        {
+            Debug.LogError($"{memberData.Prefab.name} requires a " + $"{nameof(SquadFollower)} component.",instance);
 
             Destroy(instance);
 
@@ -101,28 +128,54 @@ public sealed class SquadManager : MonoBehaviour
 
         squadMember.Initialize(memberData);
 
+        squadFollower.Initialize(trailRecorder,memberData,formationOffset,squadSettings.MinimumLeaderDistance);
+
         return squadMember;
+    }
+
+    private void RefreshFormation()
+    {
+        for (int i = 0; i < members.Count; i++)
+        {
+            SquadMember member = members[i];
+
+            if (member == null)
+            {
+                continue;
+            }
+
+            if (!member.TryGetComponent(out SquadFollower follower))
+            {
+                Debug.LogWarning($"{member.name} does not have a " + $"{nameof(SquadFollower)} component.",member);
+
+                continue;
+            }
+
+            Vector3 formationOffset = squadSettings.GetFormationOffset(i);
+
+            follower.SetFormationOffset(formationOffset);
+        }
     }
 
     private bool ValidateReferences()
     {
         if (leader == null)
         {
-            Debug.LogError($"{nameof(SquadManager)} requires a leader Transform.",this);
+            Debug.LogError($"{nameof(SquadManager)} requires a leader.",this);
 
             return false;
         }
 
         if (memberParent == null)
         {
-            Debug.LogError($"{nameof(SquadManager)} requires a member parent Transform.",this);
+            Debug.LogError($"{nameof(SquadManager)} requires a member parent.",this);
 
             return false;
         }
 
         if (squadSettings == null)
         {
-            Debug.LogError($"{nameof(SquadManager)} requires SquadSettingsSO.",this);
+            Debug.LogError($"{nameof(SquadManager)} requires a " + $"{nameof(SquadSettingsSO)}.",this);
 
             return false;
         }

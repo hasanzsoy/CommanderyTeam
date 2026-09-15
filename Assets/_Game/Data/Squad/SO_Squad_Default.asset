@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: SO_Squad_Default
   m_EditorClassIdentifier: Assembly-CSharp::SquadSettingsSO
   maxMemberCount: 6
-  initialSpawnOffset: {x: 0, y: 0, z: -1.5}
-  formationSpacing: 1.25
+  initialSpawnOffset: {x: 0, y: 0.85, z: -1.5}
+  minimumLeaderDistance: 1.5
