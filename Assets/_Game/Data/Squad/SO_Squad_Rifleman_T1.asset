@@ -18,3 +18,4 @@ MonoBehaviour:
   prefab: {fileID: 8111868257435517098, guid: 3be5568273f61c246aa9c808c6dccf33, type: 3}
   moveSpeed: 6
   rotationSpeed: 12
+  weaponData: {fileID: 11400000, guid: 83a2c8307d99a374a904468b1268f2a2, type: 2}

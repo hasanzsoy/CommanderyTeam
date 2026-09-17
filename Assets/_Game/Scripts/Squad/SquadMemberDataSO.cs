@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "SO_SquadMember_New",menuName = "CommanderyTeam/Data/Squad/Squad Member Data")]
+[CreateAssetMenu(fileName = "SO_SquadMember_New", menuName = "CommanderyTeam/Data/Squad/Squad Member Data")]
 public sealed class SquadMemberDataSO : ScriptableObject
 {
     [Header("Identity")]
@@ -11,9 +11,15 @@ public sealed class SquadMemberDataSO : ScriptableObject
     [Header("Prefab")]
     [SerializeField] private GameObject prefab;
 
-    [Header("Follow Settings")]
-    [SerializeField, Min(0f)] private float moveSpeed = 6f;
-    [SerializeField, Min(0f)] private float rotationSpeed = 12f;
+    [Header("Movement")]
+    [SerializeField, Min(0f)]
+    private float moveSpeed = 6f;
+
+    [SerializeField, Min(0f)]
+    private float rotationSpeed = 12f;
+
+    [Header("Combat")]
+    [SerializeField] private WeaponDataSO weaponData;
 
     public string DisplayName => displayName;
     public SquadMemberType MemberType => memberType;
@@ -23,4 +29,6 @@ public sealed class SquadMemberDataSO : ScriptableObject
 
     public float MoveSpeed => moveSpeed;
     public float RotationSpeed => rotationSpeed;
+
+    public WeaponDataSO WeaponData => weaponData;
 }
