@@ -30,8 +30,13 @@ public sealed class EnemyMeleeAI : MonoBehaviour
         {
             return;
         }
-        Debug.LogError($"{nameof(EnemyMeleeAI)} on {gameObject.name} " +"requires a PlayerHealth target.",this);
-        enabled = false;
+
+        targetPlayer = FindFirstObjectByType<PlayerHealth>();
+        if (targetPlayer == null)
+        {
+            Debug.LogError($"{nameof(EnemyMeleeAI)} on {gameObject.name} " +"could not find PlayerHealth in the scene.",this);
+            enabled = false;
+        }
     }
 
     private void Update()
