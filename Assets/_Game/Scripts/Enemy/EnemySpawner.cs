@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -10,7 +11,9 @@ public sealed class EnemySpawner : MonoBehaviour
     [Header("Settings")]
     [SerializeField, Min(1)]
     private int spawnCount = 5;
-    private readonly List<GameObject> spawnedEnemies = new();
+    private readonly List<EnemyHealth> spawnedEnemies = new();
+    public event Action<EnemyHealth> EnemySpawned;
+    public IReadOnlyList<EnemyHealth> SpawnedEnemies => spawnedEnemies;
 
     private void Start()
     {
@@ -38,7 +41,14 @@ public sealed class EnemySpawner : MonoBehaviour
             return;
         }
         GameObject enemyInstance = Instantiate(enemyPrefab,spawnPoint.position,spawnPoint.rotation);
-        spawnedEnemies.Add(enemyInstance);
+        if (!enemyInstance.TryGetComponent(out EnemyHealth enemyHealth))
+        {
+            Debug.LogError($"{enemyPrefab.name} requires an " + $"{nameof(EnemyHealth)} component.",enemyInstance);
+            Destroy(enemyInstance);
+            return;
+        }
+        spawnedEnemies.Add(enemyHealth);
+        EnemySpawned?.Invoke(enemyHealth);
     }
 
     private bool ValidateReferences()
