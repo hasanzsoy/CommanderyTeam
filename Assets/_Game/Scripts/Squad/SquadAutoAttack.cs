@@ -13,6 +13,7 @@ public sealed class SquadAutoAttack : MonoBehaviour
     private float targetScanInterval = 0.2f;
 
     private SquadMember squadMember;
+    private SquadCombatStats squadCombatStats;
     private WeaponDataSO weaponData;
 
     private EnemyHealth currentTarget;
@@ -20,29 +21,98 @@ public sealed class SquadAutoAttack : MonoBehaviour
     private float nextScanTime;
     private float nextFireTime;
 
+    private bool isInitialized;
+
+    private void Awake()
+    {
+        squadMember =
+            GetComponent<SquadMember>();
+    }
+
     private void Start()
     {
-        squadMember = GetComponent<SquadMember>();
-
-        if (!ValidateReferences())
-        {
-            enabled = false;
-            return;
-        }
-
-        weaponData = squadMember.Data.WeaponData;
+        TryInitialize();
     }
 
     private void Update()
     {
-        if (weaponData == null)
+        if (!isInitialized)
         {
+            TryInitialize();
             return;
         }
 
         UpdateTarget();
-
         TryFire();
+    }
+
+    private void TryInitialize()
+    {
+        if (isInitialized)
+        {
+            return;
+        }
+
+        if (squadMember == null)
+        {
+            return;
+        }
+
+        if (!squadMember.IsInitialized)
+        {
+            return;
+        }
+
+        if (squadMember.Data == null)
+        {
+            return;
+        }
+
+        weaponData =
+            squadMember.Data.WeaponData;
+
+        if (weaponData == null)
+        {
+            Debug.LogError(
+                $"{squadMember.Data.name} requires WeaponData.",
+                this);
+
+            return;
+        }
+
+        if (weaponData.ProjectilePrefab == null)
+        {
+            Debug.LogError(
+                $"{weaponData.name} requires a projectile prefab.",
+                this);
+
+            return;
+        }
+
+        if (firePoint == null)
+        {
+            Debug.LogError(
+                $"{nameof(SquadAutoAttack)} on {gameObject.name} " +
+                "requires a FirePoint.",
+                this);
+
+            return;
+        }
+
+        squadCombatStats =
+            GetComponentInParent<SquadCombatStats>();
+
+        if (squadCombatStats == null)
+        {
+            Debug.LogError(
+                $"{nameof(SquadAutoAttack)} could not find " +
+                $"{nameof(SquadCombatStats)} in the parent hierarchy.",
+                this);
+
+            return;
+        }
+
+        isInitialized = true;
     }
 
     private void UpdateTarget()
@@ -57,21 +127,30 @@ public sealed class SquadAutoAttack : MonoBehaviour
             return;
         }
 
-        nextScanTime = Time.time + targetScanInterval;
+        nextScanTime =
+            Time.time + targetScanInterval;
 
-        currentTarget = FindNearestTarget();
+        currentTarget =
+            FindNearestTarget();
     }
 
     private EnemyHealth FindNearestTarget()
     {
-        Collider[] hits = Physics.OverlapSphere(transform.position,weaponData.AttackRange,enemyLayer);
+        Collider[] hits =
+            Physics.OverlapSphere(
+                transform.position,
+                weaponData.AttackRange,
+                enemyLayer);
 
         EnemyHealth nearestTarget = null;
-        float nearestDistanceSqr = float.MaxValue;
+
+        float nearestDistanceSqr =
+            float.MaxValue;
 
         foreach (Collider hit in hits)
         {
-            if (!hit.TryGetComponent(out EnemyHealth enemyHealth))
+            if (!hit.TryGetComponent(
+                    out EnemyHealth enemyHealth))
             {
                 continue;
             }
@@ -81,15 +160,20 @@ public sealed class SquadAutoAttack : MonoBehaviour
                 continue;
             }
 
-            float distanceSqr = (enemyHealth.transform.position - transform.position).sqrMagnitude;
+            float distanceSqr =
+                (enemyHealth.transform.position -
+                 transform.position).sqrMagnitude;
 
             if (distanceSqr >= nearestDistanceSqr)
             {
                 continue;
             }
 
-            nearestDistanceSqr = distanceSqr;
-            nearestTarget = enemyHealth;
+            nearestDistanceSqr =
+                distanceSqr;
+
+            nearestTarget =
+                enemyHealth;
         }
 
         return nearestTarget;
@@ -102,16 +186,25 @@ public sealed class SquadAutoAttack : MonoBehaviour
             return false;
         }
 
-        if (currentTarget.IsDead || !currentTarget.gameObject.activeInHierarchy)
+        if (currentTarget.IsDead)
         {
             return false;
         }
 
-        float rangeSqr = weaponData.AttackRange * weaponData.AttackRange;
+        if (!currentTarget.gameObject.activeInHierarchy)
+        {
+            return false;
+        }
 
-        float distanceSqr =(currentTarget.transform.position - transform.position).sqrMagnitude;
+        float attackRangeSqr =
+            weaponData.AttackRange *
+            weaponData.AttackRange;
 
-        return distanceSqr <= rangeSqr;
+        float distanceSqr =
+            (currentTarget.transform.position -
+             transform.position).sqrMagnitude;
+
+        return distanceSqr <= attackRangeSqr;
     }
 
     private void TryFire()
@@ -128,55 +221,39 @@ public sealed class SquadAutoAttack : MonoBehaviour
 
         Fire();
 
-        nextFireTime = Time.time + (1f / weaponData.FireRate);
+        nextFireTime =
+            Time.time +
+            (1f / weaponData.FireRate);
     }
 
     private void Fire()
     {
-        GameObject projectileInstance = Instantiate(weaponData.ProjectilePrefab,firePoint.position,firePoint.rotation);
+        GameObject projectileInstance =
+            Instantiate(
+                weaponData.ProjectilePrefab,
+                firePoint.position,
+                firePoint.rotation);
 
-        if (!projectileInstance.TryGetComponent(out Projectile projectile))
+        if (!projectileInstance.TryGetComponent(
+                out Projectile projectile))
         {
-            Debug.LogError($"{weaponData.ProjectilePrefab.name} requires a " + $"{nameof(Projectile)} component.",projectileInstance);
+            Debug.LogError(
+                $"{weaponData.ProjectilePrefab.name} requires a " +
+                $"{nameof(Projectile)} component.",
+                projectileInstance);
 
             Destroy(projectileInstance);
 
             return;
         }
 
-        projectile.Initialize(currentTarget,weaponData.Damage,weaponData.ProjectileSpeed);
-    }
+        float finalDamage =
+            weaponData.Damage *
+            squadCombatStats.DamageMultiplier;
 
-    private bool ValidateReferences()
-    {
-        if (firePoint == null)
-        {
-            Debug.LogError($"{nameof(SquadAutoAttack)} on {gameObject.name} " + "requires a FirePoint.", this);
-
-            return false;
-        }
-
-        if (squadMember.Data == null)
-        {
-            Debug.LogError($"{nameof(SquadMember)} on {gameObject.name} " + "has not been initialized.",this);
-
-            return false;
-        }
-
-        if (squadMember.Data.WeaponData == null)
-        {
-            Debug.LogError($"{squadMember.Data.name} requires WeaponData.", squadMember.Data);
-
-            return false;
-        }
-
-        if (squadMember.Data.WeaponData.ProjectilePrefab == null)
-        {
-            Debug.LogError($"{squadMember.Data.WeaponData.name} requires " + "a projectile prefab.",squadMember.Data.WeaponData);
-
-            return false;
-        }
-
-        return true;
+        projectile.Initialize(
+            currentTarget,
+            finalDamage,
+            weaponData.ProjectileSpeed);
     }
 }

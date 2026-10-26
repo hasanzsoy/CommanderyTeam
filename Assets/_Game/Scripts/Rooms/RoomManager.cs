@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public sealed class RoomManager : MonoBehaviour
@@ -5,7 +6,9 @@ public sealed class RoomManager : MonoBehaviour
     [Header("References")]
     [SerializeField] private WaveManager waveManager;
     [SerializeField] private GameObject roomClearPanel;
+    public event Action RoomCleared;
     public bool IsRoomCleared { get; private set; }
+
     private void Awake()
     {
         if (!ValidateReferences())
@@ -13,6 +16,7 @@ public sealed class RoomManager : MonoBehaviour
             enabled = false;
             return;
         }
+
         roomClearPanel.SetActive(false);
     }
 
@@ -22,6 +26,7 @@ public sealed class RoomManager : MonoBehaviour
         {
             return;
         }
+
         waveManager.WaveCompleted += HandleWaveCompleted;
     }
 
@@ -31,7 +36,18 @@ public sealed class RoomManager : MonoBehaviour
         {
             return;
         }
+
         waveManager.WaveCompleted -= HandleWaveCompleted;
+    }
+
+    public void HideRoomClearPanel()
+    {
+        if (roomClearPanel == null)
+        {
+            return;
+        }
+
+        roomClearPanel.SetActive(false);
     }
 
     private void HandleWaveCompleted()
@@ -41,13 +57,9 @@ public sealed class RoomManager : MonoBehaviour
             return;
         }
         IsRoomCleared = true;
-        ShowRoomClear();
-        Debug.Log("Room Cleared");
-    }
-
-    private void ShowRoomClear()
-    {
         roomClearPanel.SetActive(true);
+        Debug.Log("Room Cleared");
+        RoomCleared?.Invoke();
     }
 
     private bool ValidateReferences()
@@ -63,6 +75,7 @@ public sealed class RoomManager : MonoBehaviour
             Debug.LogError($"{nameof(RoomManager)} requires a Room Clear Panel.",this);
             return false;
         }
+
         return true;
     }
 }

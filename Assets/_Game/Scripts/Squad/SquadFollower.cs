@@ -6,6 +6,7 @@ public sealed class SquadFollower : MonoBehaviour
     private SquadMemberDataSO memberData;
 
     private float followDistance;
+    private float lateralOffset;
     private float minimumLeaderDistance;
     private float fixedY;
 
@@ -56,6 +57,8 @@ public sealed class SquadFollower : MonoBehaviour
         followDistance = Mathf.Max(
             Mathf.Abs(formationOffset.z),
             minimumLeaderDistance);
+
+        lateralOffset = formationOffset.x;
     }
 
     private void LateUpdate()
@@ -71,14 +74,23 @@ public sealed class SquadFollower : MonoBehaviour
     private void FollowTrail()
     {
         Vector3 targetPosition =
-            trailRecorder.GetPositionBehind(
-                followDistance);
-
-        // Rifleman yüksekliğini koru.
-        targetPosition.y = fixedY;
+            CalculateTargetPosition();
 
         targetPosition =
             GetSafeTargetPosition(targetPosition);
+
+        Vector3 directionToTarget =
+            targetPosition - transform.position;
+
+        directionToTarget.y = 0f;
+
+        float stoppingDistance = 0.05f;
+
+        if (directionToTarget.sqrMagnitude <=
+            stoppingDistance * stoppingDistance)
+        {
+            return;
+        }
 
         Vector3 previousPosition =
             transform.position;
@@ -87,19 +99,81 @@ public sealed class SquadFollower : MonoBehaviour
             Vector3.MoveTowards(
                 transform.position,
                 targetPosition,
-                memberData.MoveSpeed * Time.deltaTime);
+                memberData.MoveSpeed *
+                Time.deltaTime);
 
         nextPosition.y = fixedY;
 
-        transform.position = nextPosition;
+        transform.position =
+            nextPosition;
 
         EnforceMinimumLeaderDistance();
 
         Vector3 movementDirection =
-            transform.position - previousPosition;
+            transform.position -
+            previousPosition;
 
         RotateTowardsMovement(
             movementDirection);
+    }
+
+    private Vector3 CalculateTargetPosition()
+    {
+        Vector3 centerPosition =
+            trailRecorder.GetPositionBehind(
+                followDistance);
+
+        Vector3 trailDirection =
+            GetTrailDirection();
+
+        Vector3 rightDirection =
+            Vector3.Cross(
+                Vector3.up,
+                trailDirection).normalized;
+
+        Vector3 targetPosition =
+            centerPosition +
+            rightDirection * lateralOffset;
+
+        targetPosition.y = fixedY;
+
+        return targetPosition;
+    }
+
+    private Vector3 GetTrailDirection()
+    {
+        const float sampleDistance = 0.2f;
+
+        float forwardSampleDistance =
+            Mathf.Max(
+                followDistance - sampleDistance,
+                0f);
+
+        float backSampleDistance =
+            followDistance + sampleDistance;
+
+        Vector3 forwardPoint =
+            trailRecorder.GetPositionBehind(
+                forwardSampleDistance);
+
+        Vector3 backPoint =
+            trailRecorder.GetPositionBehind(
+                backSampleDistance);
+
+        Vector3 direction =
+            forwardPoint - backPoint;
+
+        direction.y = 0f;
+
+        if (direction.sqrMagnitude <= 0.0001f)
+        {
+            direction =
+                trailRecorder.transform.forward;
+
+            direction.y = 0f;
+        }
+
+        return direction.normalized;
     }
 
     private Vector3 GetSafeTargetPosition(
@@ -115,9 +189,12 @@ public sealed class SquadFollower : MonoBehaviour
 
         leaderToTarget.y = 0f;
 
-        if (leaderToTarget.sqrMagnitude >=
+        float minimumDistanceSqr =
             minimumLeaderDistance *
-            minimumLeaderDistance)
+            minimumLeaderDistance;
+
+        if (leaderToTarget.sqrMagnitude >=
+            minimumDistanceSqr)
         {
             return targetPosition;
         }
@@ -185,7 +262,8 @@ public sealed class SquadFollower : MonoBehaviour
 
         safePosition.y = fixedY;
 
-        transform.position = safePosition;
+        transform.position =
+            safePosition;
     }
 
     private void RotateTowardsMovement(
@@ -193,7 +271,7 @@ public sealed class SquadFollower : MonoBehaviour
     {
         movementDirection.y = 0f;
 
-        if (movementDirection.sqrMagnitude <= 0.0001f)
+        if (movementDirection.sqrMagnitude <= 0.001f)
         {
             return;
         }
