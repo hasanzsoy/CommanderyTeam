@@ -7,7 +7,6 @@ public sealed class WaveManager : MonoBehaviour
     [SerializeField] private EnemySpawner enemySpawner;
     public event Action WaveCompleted;
     public int AliveEnemyCount { get; private set; }
-    public int CurrentWave { get; private set; }
     private bool waveCompleted;
     private void Awake()
     {
@@ -18,7 +17,6 @@ public sealed class WaveManager : MonoBehaviour
         Debug.LogError($"{nameof(WaveManager)} requires an " +$"{nameof(EnemySpawner)} reference.",this);
         enabled = false;
     }
-
     private void OnEnable()
     {
         if (enemySpawner == null)
@@ -27,16 +25,6 @@ public sealed class WaveManager : MonoBehaviour
         }
         enemySpawner.EnemySpawned += HandleEnemySpawned;
     }
-
-    private void Start()
-    {
-        if (!enabled)
-        {
-            return;
-        }
-        StartNextWave();
-    }
-
     private void OnDisable()
     {
         if (enemySpawner == null)
@@ -45,16 +33,19 @@ public sealed class WaveManager : MonoBehaviour
         }
         enemySpawner.EnemySpawned -= HandleEnemySpawned;
     }
-
-    public void StartNextWave()
+    public void StartWave(
+        RoomDataSO roomData)
     {
-        CurrentWave++;
+        if (roomData == null)
+        {
+            Debug.LogError($"{nameof(WaveManager)} received null RoomDataSO.",this);
+            return;
+        }
         AliveEnemyCount = 0;
         waveCompleted = false;
-        enemySpawner.SpawnWave();
-        Debug.Log($"Wave {CurrentWave} Started");
+        enemySpawner.SpawnWave(roomData.EnemyPrefab,roomData.EnemyCount);
+        Debug.Log($"{roomData.DisplayName} Started");
     }
-
     private void HandleEnemySpawned(EnemyHealth enemyHealth)
     {
         if (enemyHealth == null)
@@ -64,7 +55,6 @@ public sealed class WaveManager : MonoBehaviour
         AliveEnemyCount++;
         enemyHealth.Died += HandleEnemyDied;
     }
-
     private void HandleEnemyDied(EnemyHealth enemyHealth)
     {
         if (enemyHealth == null)
@@ -75,7 +65,6 @@ public sealed class WaveManager : MonoBehaviour
         AliveEnemyCount = Mathf.Max(AliveEnemyCount - 1,0);
         CheckWaveCompleted();
     }
-
     private void CheckWaveCompleted()
     {
         if (waveCompleted)
@@ -87,7 +76,7 @@ public sealed class WaveManager : MonoBehaviour
             return;
         }
         waveCompleted = true;
-        Debug.Log($"Wave {CurrentWave} Complete");
+        Debug.Log("Wave Complete");
         WaveCompleted?.Invoke();
     }
 }

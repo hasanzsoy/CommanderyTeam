@@ -1,4 +1,5 @@
 using System.Collections;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -6,7 +7,6 @@ public sealed class RewardManager : MonoBehaviour
 {
     [Header("Core References")]
     [SerializeField] private RoomManager roomManager;
-    [SerializeField] private WaveManager waveManager;
     [SerializeField] private PlayerHealth playerHealth;
     [SerializeField] private SquadManager squadManager;
     [SerializeField] private SquadCombatStats squadCombatStats;
@@ -25,6 +25,7 @@ public sealed class RewardManager : MonoBehaviour
     [SerializeField, Min(0f)]
     private float rewardOpenDelay = 1f;
     private bool rewardSelected;
+    public event Action RewardSelected;
 
     private void Awake()
     {
@@ -106,15 +107,9 @@ public sealed class RewardManager : MonoBehaviour
                 break;
         }
         rewardPanel.SetActive(false);
-        StartNextWave();
+        RewardSelected?.Invoke();
     }
-    private void StartNextWave()
-    {
-        roomManager.PrepareNextWave();
-
-        waveManager.StartNextWave();
-    }
-
+    
     private void ApplyRiflemanReward()
     {
         squadManager.TryAddMember(riflemanData);
@@ -164,7 +159,7 @@ public sealed class RewardManager : MonoBehaviour
 
     private bool ValidateReferences()
     {
-        if (roomManager == null || waveManager == null || playerHealth == null || squadManager == null || squadCombatStats == null)
+        if (roomManager == null || playerHealth == null || squadManager == null || squadCombatStats == null)
         {
             Debug.LogError($"{nameof(RewardManager)} has missing core references.",this);
             return false;

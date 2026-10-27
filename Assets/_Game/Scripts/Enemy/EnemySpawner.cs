@@ -4,32 +4,26 @@ using UnityEngine;
 
 public sealed class EnemySpawner : MonoBehaviour
 {
-    [Header("Enemy")]
-    [SerializeField] private GameObject enemyPrefab;
     [Header("Spawn Points")]
     [SerializeField] private Transform[] spawnPoints;
-    [Header("Settings")]
-    [SerializeField, Min(1)]
-    private int spawnCount = 5;
     private readonly List<EnemyHealth> spawnedEnemies = new();
     public event Action<EnemyHealth> EnemySpawned;
     public IReadOnlyList<EnemyHealth> SpawnedEnemies => spawnedEnemies;
-
-    public void SpawnWave()
+    public void SpawnWave(GameObject enemyPrefab,int enemyCount)
     {
-        if (!ValidateReferences())
+        if (!ValidateReferences(enemyPrefab,enemyCount))
         {
             return;
         }
         spawnedEnemies.Clear();
-        int finalSpawnCount = Mathf.Min(spawnCount,spawnPoints.Length);
+        int finalSpawnCount = Mathf.Min(enemyCount,spawnPoints.Length);
         for (int i = 0; i < finalSpawnCount; i++)
         {
-            SpawnEnemyAt(spawnPoints[i]);
+            SpawnEnemyAt(enemyPrefab,spawnPoints[i]);
         }
     }
 
-    private void SpawnEnemyAt(Transform spawnPoint)
+    private void SpawnEnemyAt(GameObject enemyPrefab,Transform spawnPoint)
     {
         if (spawnPoint == null)
         {
@@ -38,18 +32,25 @@ public sealed class EnemySpawner : MonoBehaviour
         GameObject enemyInstance = Instantiate(enemyPrefab,spawnPoint.position,spawnPoint.rotation);
         if (!enemyInstance.TryGetComponent(out EnemyHealth enemyHealth))
         {
-            Debug.LogError($"{enemyPrefab.name} requires an " + $"{nameof(EnemyHealth)} component.",enemyInstance);
+            Debug.LogError($"{enemyPrefab.name} requires an " +$"{nameof(EnemyHealth)} component.",enemyInstance);
             Destroy(enemyInstance);
             return;
         }
         spawnedEnemies.Add(enemyHealth);
         EnemySpawned?.Invoke(enemyHealth);
     }
-    private bool ValidateReferences()
+
+    private bool ValidateReferences(GameObject enemyPrefab,int enemyCount)
     {
         if (enemyPrefab == null)
         {
-            Debug.LogError($"{nameof(EnemySpawner)} requires an enemy prefab.",this);
+            Debug.LogError($"{nameof(EnemySpawner)} received a null enemy prefab.",this);
+            return false;
+        }
+
+        if (enemyCount <= 0)
+        {
+            Debug.LogError($"{nameof(EnemySpawner)} received an invalid enemy count.",this);
             return false;
         }
 
