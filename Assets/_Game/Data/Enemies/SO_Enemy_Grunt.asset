@@ -14,8 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyDataSO
   displayName: Grunt
   enemyType: 0
-  maxHealth: 40
+  maxHealth: 35
   moveSpeed: 2.5
+  rotationSpeed: 10
   attackDamage: 10
   attackRange: 1.1
   attackCooldown: 1

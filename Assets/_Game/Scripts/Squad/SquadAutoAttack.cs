@@ -250,6 +250,7 @@ public sealed class SquadAutoAttack : MonoBehaviour
         float finalDamage =
             weaponData.Damage *
             squadCombatStats.DamageMultiplier;
+        Debug.Log($"Final Damage: {finalDamage}");
 
         projectile.Initialize(
             currentTarget,
