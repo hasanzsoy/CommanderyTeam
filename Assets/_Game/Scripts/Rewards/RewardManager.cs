@@ -6,6 +6,7 @@ public sealed class RewardManager : MonoBehaviour
 {
     [Header("Core References")]
     [SerializeField] private RoomManager roomManager;
+    [SerializeField] private WaveManager waveManager;
     [SerializeField] private PlayerHealth playerHealth;
     [SerializeField] private SquadManager squadManager;
     [SerializeField] private SquadCombatStats squadCombatStats;
@@ -105,6 +106,13 @@ public sealed class RewardManager : MonoBehaviour
                 break;
         }
         rewardPanel.SetActive(false);
+        StartNextWave();
+    }
+    private void StartNextWave()
+    {
+        roomManager.PrepareNextWave();
+
+        waveManager.StartNextWave();
     }
 
     private void ApplyRiflemanReward()
@@ -156,7 +164,7 @@ public sealed class RewardManager : MonoBehaviour
 
     private bool ValidateReferences()
     {
-        if (roomManager == null || playerHealth == null || squadManager == null || squadCombatStats == null)
+        if (roomManager == null || waveManager == null || playerHealth == null || squadManager == null || squadCombatStats == null)
         {
             Debug.LogError($"{nameof(RewardManager)} has missing core references.",this);
             return false;

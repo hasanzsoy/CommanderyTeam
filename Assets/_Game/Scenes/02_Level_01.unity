@@ -471,6 +471,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RewardManager
   roomManager: {fileID: 286287877}
+  waveManager: {fileID: 203540257}
   playerHealth: {fileID: 187968689}
   squadManager: {fileID: 869317522}
   squadCombatStats: {fileID: 869317524}

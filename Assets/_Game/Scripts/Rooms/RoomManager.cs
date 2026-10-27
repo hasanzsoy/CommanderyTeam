@@ -8,7 +8,6 @@ public sealed class RoomManager : MonoBehaviour
     [SerializeField] private GameObject roomClearPanel;
     public event Action RoomCleared;
     public bool IsRoomCleared { get; private set; }
-
     private void Awake()
     {
         if (!ValidateReferences())
@@ -16,7 +15,6 @@ public sealed class RoomManager : MonoBehaviour
             enabled = false;
             return;
         }
-
         roomClearPanel.SetActive(false);
     }
 
@@ -26,7 +24,6 @@ public sealed class RoomManager : MonoBehaviour
         {
             return;
         }
-
         waveManager.WaveCompleted += HandleWaveCompleted;
     }
 
@@ -36,8 +33,16 @@ public sealed class RoomManager : MonoBehaviour
         {
             return;
         }
-
         waveManager.WaveCompleted -= HandleWaveCompleted;
+    }
+
+    public void PrepareNextWave()
+    {
+        IsRoomCleared = false;
+        if (roomClearPanel != null)
+        {
+            roomClearPanel.SetActive(false);
+        }
     }
 
     public void HideRoomClearPanel()
@@ -46,7 +51,6 @@ public sealed class RoomManager : MonoBehaviour
         {
             return;
         }
-
         roomClearPanel.SetActive(false);
     }
 
@@ -66,7 +70,7 @@ public sealed class RoomManager : MonoBehaviour
     {
         if (waveManager == null)
         {
-            Debug.LogError($"{nameof(RoomManager)} requires a " + $"{nameof(WaveManager)} reference.",this);
+            Debug.LogError($"{nameof(RoomManager)} requires a " +$"{nameof(WaveManager)} reference.",this);
             return false;
         }
 
@@ -75,7 +79,6 @@ public sealed class RoomManager : MonoBehaviour
             Debug.LogError($"{nameof(RoomManager)} requires a Room Clear Panel.",this);
             return false;
         }
-
         return true;
     }
 }

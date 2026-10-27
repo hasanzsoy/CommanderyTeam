@@ -7,14 +7,16 @@ public sealed class WaveManager : MonoBehaviour
     [SerializeField] private EnemySpawner enemySpawner;
     public event Action WaveCompleted;
     public int AliveEnemyCount { get; private set; }
+    public int CurrentWave { get; private set; }
     private bool waveCompleted;
     private void Awake()
     {
-        if (enemySpawner == null)
+        if (enemySpawner != null)
         {
-            Debug.LogError($"{nameof(WaveManager)} requires an " + $"{nameof(EnemySpawner)} reference.",this);
-            enabled = false;
+            return;
         }
+        Debug.LogError($"{nameof(WaveManager)} requires an " +$"{nameof(EnemySpawner)} reference.",this);
+        enabled = false;
     }
 
     private void OnEnable()
@@ -26,6 +28,15 @@ public sealed class WaveManager : MonoBehaviour
         enemySpawner.EnemySpawned += HandleEnemySpawned;
     }
 
+    private void Start()
+    {
+        if (!enabled)
+        {
+            return;
+        }
+        StartNextWave();
+    }
+
     private void OnDisable()
     {
         if (enemySpawner == null)
@@ -35,8 +46,16 @@ public sealed class WaveManager : MonoBehaviour
         enemySpawner.EnemySpawned -= HandleEnemySpawned;
     }
 
-    private void HandleEnemySpawned(
-        EnemyHealth enemyHealth)
+    public void StartNextWave()
+    {
+        CurrentWave++;
+        AliveEnemyCount = 0;
+        waveCompleted = false;
+        enemySpawner.SpawnWave();
+        Debug.Log($"Wave {CurrentWave} Started");
+    }
+
+    private void HandleEnemySpawned(EnemyHealth enemyHealth)
     {
         if (enemyHealth == null)
         {
@@ -46,8 +65,7 @@ public sealed class WaveManager : MonoBehaviour
         enemyHealth.Died += HandleEnemyDied;
     }
 
-    private void HandleEnemyDied(
-        EnemyHealth enemyHealth)
+    private void HandleEnemyDied(EnemyHealth enemyHealth)
     {
         if (enemyHealth == null)
         {
@@ -69,7 +87,7 @@ public sealed class WaveManager : MonoBehaviour
             return;
         }
         waveCompleted = true;
-        Debug.Log("Wave Complete");
+        Debug.Log($"Wave {CurrentWave} Complete");
         WaveCompleted?.Invoke();
     }
 }

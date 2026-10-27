@@ -15,18 +15,13 @@ public sealed class EnemySpawner : MonoBehaviour
     public event Action<EnemyHealth> EnemySpawned;
     public IReadOnlyList<EnemyHealth> SpawnedEnemies => spawnedEnemies;
 
-    private void Start()
+    public void SpawnWave()
     {
         if (!ValidateReferences())
         {
-            enabled = false;
             return;
         }
-        SpawnEnemies();
-    }
-
-    private void SpawnEnemies()
-    {
+        spawnedEnemies.Clear();
         int finalSpawnCount = Mathf.Min(spawnCount,spawnPoints.Length);
         for (int i = 0; i < finalSpawnCount; i++)
         {
@@ -50,7 +45,6 @@ public sealed class EnemySpawner : MonoBehaviour
         spawnedEnemies.Add(enemyHealth);
         EnemySpawned?.Invoke(enemyHealth);
     }
-
     private bool ValidateReferences()
     {
         if (enemyPrefab == null)
